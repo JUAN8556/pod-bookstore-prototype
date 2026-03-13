@@ -1,0 +1,271 @@
+   {                                                                                                                                                             
+     "name": "pod-bookstore-prototype",                                                                                                                          
+     "version": "0.1.0",                                                                                                                                         
+     "private": true,                                                                                                                                            
+     "scripts": {                                                                                                                                                
+       "dev": "next dev",                                                                                                                                        
+       "build": "next build",                                                                                                                                    
+       "start": "next start"                                                                                                                                     
+     },                                                                                                                                                          
+     "dependencies": {                                                                                                                                           
+       "next": "13.0.0",                                                                                                                                         
+       "react": "18.2.0",                                                                                                                                        
+       "react-dom": "18.2.0",                                                                                                                                    
+       "stripe": "^11.0.0"                                                                                                                                       
+     }                                                                                                                                                           
+   }                                                                                                                                                             
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 3. Crear el fichero products.json                                                                                                                           
+   cat > products.json << EOL                                                                                                                                    
+   [                                                                                                                                                             
+     {                                                                                                                                                           
+       "id": "book-quijote-001",                                                                                                                                 
+       "type": "book",                                                                                                                                           
+       "title": "Don Quijote de la Mancha",                                                                                                                      
+       "author": "Miguel de Cervantes",                                                                                                                          
+       "price_cents": 2499,                                                                                                                                      
+       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/PSM_V80_D228_Don_Quixote.jpg/800px-PSM_V80_D228_Don_Quixote.jpg"                  
+     },                                                                                                                                                          
+     {                                                                                                                                                           
+       "id": "comic-space-001",                                                                                                                                  
+       "type": "comic",                                                                                                                                          
+       "title": "Las Crónicas del Vacío",                                                                                                                        
+       "author": "El Arquitecto",                                                                                                                                
+       "price_cents": 1299,                                                                                                                                      
+       "image_url": "https://via.placeholder.com/400x600.png?text=Comic+Cover"                                                                                   
+     }                                                                                                                                                           
+   ]                                                                                                                                                             
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 4. Crear los directorios para las páginas y la API                                                                                                          
+   mkdir -p pages/api                                                                                                                                            
+                                                                                                                                                                 
+   # 5. Crear la página principal                                                                                                                                
+   cat > pages/index.js << EOL                                                                                                                                   
+   import React, { useState } from 'react';                                                                                                                      
+   import products from '../products.json';                                                                                                                      
+                                                                                                                                                                 
+   const HomePage = () => {                                                                                                                                      
+       const [loading, setLoading] = useState(false);                                                                                                            
+                                                                                                                                                                 
+       const handleBuyClick = async (productId) => {                                                                                                             
+           setLoading(true);                                                                                                                                     
+           try {                                                                                                                                                 
+               const response = await fetch('/api/create-checkout-session', {                                                                                    
+                   method: 'POST',                                                                                                                               
+                   headers: { 'Content-Type': 'application/json' },                                                                                              
+                   body: JSON.stringify({ productId: productId, quantity: 1 }),                                                                                  
+               });                                                                                                                                               
+                                                                                                                                                                 
+               if (!response.ok) {                                                                                                                               
+                   const errorBody = await response.json();                                                                                                      
+                   throw new Error(errorBody.error || `HTTP error! status: ${response.status}`);                                                              
+               }                                                                                                                                                 
+                                                                                                                                                                 
+               const { url } = await response.json();                                                                                                            
+               window.location.href = url;                                                                                                                       
+                                                                                                                                                                 
+           } catch (error) {                                                                                                                                     
+               console.error("Failed to create Stripe session:", error);                                                                                         
+               alert(`Error: ${error.message}`);                                                                                                              
+               setLoading(false);                                                                                                                                
+           }                                                                                                                                                     
+       };                                                                                                                                                        
+                                                                                                                                                                 
+       return (                                                                                                                                                  
+           <div style={{ fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', padding: '20px' }}>                                                      
+               <h1>Nuestra Colección</h1>                                                                                                                        
+               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>                                       
+                   {products.map(product => (                                                                                                                    
+                       <div key={product.id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '8px', textAlign: 'center' }}>                    
+                           <img src={product.image_url} alt={product.title} style={{ width: '100%', height: '250px', objectFit: 'contain' }} />                  
+                           <h2>{product.title}</h2>                                                                                                              
+                           <p>por {product.author}</p>                                                                                                           
+                           <p style={{ fontSize: '1.2em', fontWeight: 'bold' }}>                                                                                 
+                               $S{(product.price_cents / 100).toFixed(2)}                                                                                       
+                           </p>                                                                                                                                  
+                           <button                                                                                                                               
+                               onClick={() => handleBuyClick(product.id)}                                                                                        
+                               disabled={loading}                                                                                                                
+                               style={{ padding: '10px 20px', fontSize: '1em', cursor: 'pointer', background: loading ? '#ccc' : '#0070f3', color: 'white',      
+ border: 'none', borderRadius: '5px' }}                                                                                                                          
+                           >                                                                                                                                     
+                               {loading ? 'Procesando...' : 'Comprar Ahora'}                                                                                     
+                           </button>                                                                                                                             
+                       </div>                                                                                                                                    
+                   ))}                                                                                                                                           
+               </div>                                                                                                                                            
+           </div>                                                                                                                                                
+       );                                                                                                                                                        
+   };                                                                                                                                                            
+                                                                                                                                                                 
+   export default HomePage;                                                                                                                                      
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 6. Crear el endpoint de la API                                                                                                                              
+   cat > pages/api/create-checkout-session.js << EOL                                                                                                             
+   // NOTE: This is a placeholder for a real implementation.                                                                                                     
+   // In a real project, you would use the Stripe Node.js library.                                                                                               
+   // This simplified version is for demonstration purposes.                                                                                                     
+                                                                                                                                                                 
+   export default async function handler(req, res) {                                                                                                             
+       if (req.method !== 'POST') {                                                                                                                              
+           res.setHeader('Allow', 'POST');                                                                                                                       
+           return res.status(405).end('Method Not Allowed');                                                                                                     
+       }                                                                                                                                                         
+                                                                                                                                                                 
+       // This is a mock response. In a real scenario, you'd call Stripe's API.                                                                                  
+       const mockStripeUrl = 'https://checkout.stripe.com/pay/cs_test_a1B2c3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1v2W3x4Y5z6';                                     
+                                                                                                                                                                 
+       res.status(200).json({ url: mockStripeUrl });                                                                                                             
+   }                                                                                                                                                             
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 7. Inicializar Git y subir el código                                                                                                                        
+   git init                                                                                                                                                      
+   git add .                                                                                                                                                     
+   git commit -m "Initial commit of the PoD bookstore prototype"                                                                                                 
+   git branch -M main                                                                                                                                            
+   git remote add origin https://github.com/JUAN8556/pod-bookstore-prototype.git                                                                                 
+   git push -u origin main                                                                                                                                       
+                                                                                                                                                                 
+   echo "¡Listo! El código ha sido subido a tu repositorio de GitHub."# 1. Crear el directorio y moverse a él                                                                                                                       
+   mkdir -p ~/pod-bookstore-prototype                                                                                                                            
+   cd ~/pod-bookstore-prototype                                                                                                                                  
+                                                                                                                                                                 
+   # 2. Crear el fichero package.json                                                                                                                            
+   cat > package.json << EOL                                                                                                                                     
+   {                                                                                                                                                             
+     "name": "pod-bookstore-prototype",                                                                                                                          
+     "version": "0.1.0",                                                                                                                                         
+     "private": true,                                                                                                                                            
+     "scripts": {                                                                                                                                                
+       "dev": "next dev",                                                                                                                                        
+       "build": "next build",                                                                                                                                    
+       "start": "next start"                                                                                                                                     
+     },                                                                                                                                                          
+     "dependencies": {                                                                                                                                           
+       "next": "13.0.0",                                                                                                                                         
+       "react": "18.2.0",                                                                                                                                        
+       "react-dom": "18.2.0",                                                                                                                                    
+       "stripe": "^11.0.0"                                                                                                                                       
+     }                                                                                                                                                           
+   }                                                                                                                                                             
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 3. Crear el fichero products.json                                                                                                                           
+   cat > products.json << EOL                                                                                                                                    
+   [                                                                                                                                                             
+     {                                                                                                                                                           
+       "id": "book-quijote-001",                                                                                                                                 
+       "type": "book",                                                                                                                                           
+       "title": "Don Quijote de la Mancha",                                                                                                                      
+       "author": "Miguel de Cervantes",                                                                                                                          
+       "price_cents": 2499,                                                                                                                                      
+       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/PSM_V80_D228_Don_Quixote.jpg/800px-PSM_V80_D228_Don_Quixote.jpg"                  
+     },                                                                                                                                                          
+     {                                                                                                                                                           
+       "id": "comic-space-001",                                                                                                                                  
+       "type": "comic",                                                                                                                                          
+       "title": "Las Crónicas del Vacío",                                                                                                                        
+       "author": "El Arquitecto",                                                                                                                                
+       "price_cents": 1299,                                                                                                                                      
+       "image_url": "https://via.placeholder.com/400x600.png?text=Comic+Cover"                                                                                   
+     }                                                                                                                                                           
+   ]                                                                                                                                                             
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 4. Crear los directorios para las páginas y la API                                                                                                          
+   mkdir -p pages/api                                                                                                                                            
+                                                                                                                                                                 
+   # 5. Crear la página principal                                                                                                                                
+   cat > pages/index.js << EOL                                                                                                                                   
+   import React, { useState } from 'react';                                                                                                                      
+   import products from '../products.json';                                                                                                                      
+                                                                                                                                                                 
+   const HomePage = () => {                                                                                                                                      
+       const [loading, setLoading] = useState(false);                                                                                                            
+                                                                                                                                                                 
+       const handleBuyClick = async (productId) => {                                                                                                             
+           setLoading(true);                                                                                                                                     
+           try {                                                                                                                                                 
+               const response = await fetch('/api/create-checkout-session', {                                                                                    
+                   method: 'POST',                                                                                                                               
+                   headers: { 'Content-Type': 'application/json' },                                                                                              
+                   body: JSON.stringify({ productId: productId, quantity: 1 }),                                                                                  
+               });                                                                                                                                               
+                                                                                                                                                                 
+               if (!response.ok) {                                                                                                                               
+                   const errorBody = await response.json();                                                                                                      
+                   throw new Error(errorBody.error || `HTTP error! status: ${response.status}`);                                                              
+               }                                                                                                                                                 
+                                                                                                                                                                 
+               const { url } = await response.json();                                                                                                            
+               window.location.href = url;                                                                                                                       
+                                                                                                                                                                 
+           } catch (error) {                                                                                                                                     
+               console.error("Failed to create Stripe session:", error);                                                                                         
+               alert(`Error: ${error.message}`);                                                                                                              
+               setLoading(false);                                                                                                                                
+           }                                                                                                                                                     
+       };                                                                                                                                                        
+                                                                                                                                                                 
+       return (                                                                                                                                                  
+           <div style={{ fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', padding: '20px' }}>                                                      
+               <h1>Nuestra Colección</h1>                                                                                                                        
+               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>                                       
+                   {products.map(product => (                                                                                                                    
+                       <div key={product.id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '8px', textAlign: 'center' }}>                    
+                           <img src={product.image_url} alt={product.title} style={{ width: '100%', height: '250px', objectFit: 'contain' }} />                  
+                           <h2>{product.title}</h2>                                                                                                              
+                           <p>por {product.author}</p>                                                                                                           
+                           <p style={{ fontSize: '1.2em', fontWeight: 'bold' }}>                                                                                 
+                               $S{(product.price_cents / 100).toFixed(2)}                                                                                       
+                           </p>                                                                                                                                  
+                           <button                                                                                                                               
+                               onClick={() => handleBuyClick(product.id)}                                                                                        
+                               disabled={loading}                                                                                                                
+                               style={{ padding: '10px 20px', fontSize: '1em', cursor: 'pointer', background: loading ? '#ccc' : '#0070f3', color: 'white',      
+ border: 'none', borderRadius: '5px' }}                                                                                                                          
+                           >                                                                                                                                     
+                               {loading ? 'Procesando...' : 'Comprar Ahora'}                                                                                     
+                           </button>                                                                                                                             
+                       </div>                                                                                                                                    
+                   ))}                                                                                                                                           
+               </div>                                                                                                                                            
+           </div>                                                                                                                                                
+       );                                                                                                                                                        
+   };                                                                                                                                                            
+                                                                                                                                                                 
+   export default HomePage;                                                                                                                                      
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 6. Crear el endpoint de la API                                                                                                                              
+   cat > pages/api/create-checkout-session.js << EOL                                                                                                             
+   // NOTE: This is a placeholder for a real implementation.                                                                                                     
+   // In a real project, you would use the Stripe Node.js library.                                                                                               
+   // This simplified version is for demonstration purposes.                                                                                                     
+                                                                                                                                                                 
+   export default async function handler(req, res) {                                                                                                             
+       if (req.method !== 'POST') {                                                                                                                              
+           res.setHeader('Allow', 'POST');                                                                                                                       
+           return res.status(405).end('Method Not Allowed');                                                                                                     
+       }                                                                                                                                                         
+                                                                                                                                                                 
+       // This is a mock response. In a real scenario, you'd call Stripe's API.                                                                                  
+       const mockStripeUrl = 'https://checkout.stripe.com/pay/cs_test_a1B2c3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1v2W3x4Y5z6';                                     
+                                                                                                                                                                 
+       res.status(200).json({ url: mockStripeUrl });                                                                                                             
+   }                                                                                                                                                             
+   EOL                                                                                                                                                           
+                                                                                                                                                                 
+   # 7. Inicializar Git y subir el código                                                                                                                        
+   git init                                                                                                                                                      
+   git add .                                                                                                                                                     
+   git commit -m "Initial commit of the PoD bookstore prototype"                                                                                                 
+   git branch -M main                                                                                                                                            
+   git remote add origin https://github.com/JUAN8556/pod-bookstore-prototype.git                                                                                 
+   git push -u origin main                                                                                                                                       
+                                                                                                                                                                 
+   echo "¡Listo! El código ha sido subido a tu repositorio de GitHub."
