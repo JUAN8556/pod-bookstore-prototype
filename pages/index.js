@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { ShoppingCart, BookOpen, Loader2, Star, ShieldCheck, Truck, X } from 'lucide-react';
+import { ShoppingCart, BookOpen, Loader2, Star, ShieldCheck, Truck, X, User } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import products from '../products.json';
 
 export default function HomePage() {
+    const { data: session } = useSession();
+    const router = useRouter();
     const [loading, setLoading] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -141,10 +145,18 @@ export default function HomePage() {
                                 Códice
                             </span>
                         </div>
-                        <div className="hidden sm:flex space-x-8 text-sm font-medium text-slate-600">
-                            <a href="#" className="hover:text-indigo-600 transition-colors">Catálogo</a>
-                            <a href="#" className="hover:text-indigo-600 transition-colors">Nuestra Calidad</a>
+                        <div className="hidden sm:flex items-center space-x-8 text-sm font-medium text-slate-600">
+                            <a href="#catalogo" className="hover:text-indigo-600 transition-colors">Catálogo</a>
                             <a href="#" className="hover:text-indigo-600 transition-colors">Autores</a>
+                            {session ? (
+                                <button onClick={() => router.push('/profile')} className="flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
+                                    <User className="w-4 h-4" /> Mi Cuenta
+                                </button>
+                            ) : (
+                                <button onClick={() => router.push('/login')} className="flex items-center gap-2 text-slate-600 font-bold hover:text-indigo-600 transition-colors">
+                                    <User className="w-4 h-4" /> Iniciar Sesión
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
