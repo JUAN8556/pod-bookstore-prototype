@@ -8,26 +8,11 @@ export default function HomePage() {
 
     const handleBuyClick = async (productId) => {
         setLoading(productId);
-        try {
-            const response = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: productId, quantity: 1 }),
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json();
-                throw new Error(errorBody.error || `HTTP error! status: ${response.status}`);
-            }
-
-            const { url } = await response.json();
-            window.location.href = url;
-
-        } catch (error) {
-            console.error("Failed to create Stripe session:", error);
-            alert(`Error: ${error.message}`);
+        // Simular un proceso de pago
+        setTimeout(() => {
+            alert(`¡Simulación de Compra Exitosa!\n\nSe ha registrado la orden para el producto ID: ${productId}.\n(En la versión final, serás redirigido a Stripe para pagar de verdad).`);
             setLoading(null);
-        }
+        }, 1500);
     };
 
     return (
