@@ -232,12 +232,12 @@ export default function HomePage() {
                             <div className="absolute inset-0 bg-indigo-500 blur-[100px] opacity-20 rounded-full"></div>
                             <div className="relative grid grid-cols-2 gap-4 transform lg:rotate-3">
                                 <img 
-                                    src="https://m.media-amazon.com/images/I/41O+n8T4WJL.jpg" 
+                                    src="https://books.google.com/books/content?id=soSqDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api" 
                                     alt="La Espada De La Luz: El Libro De La Noche" 
                                     className="rounded-xl shadow-2xl shadow-indigo-500/20 border border-slate-700 hover:scale-105 transition-transform duration-300"
                                 />
                                 <img 
-                                    src="https://m.media-amazon.com/images/I/411jK2GvjKL.jpg" 
+                                    src="https://books.google.com/books/content?id=qfCFDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api" 
                                     alt="La Espada De La Luz: Resurrección" 
                                     className="rounded-xl shadow-2xl shadow-purple-500/20 border border-slate-700 transform translate-y-8 hover:scale-105 transition-transform duration-300"
                                 />
