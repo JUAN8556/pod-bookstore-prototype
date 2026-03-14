@@ -1,19 +1,44 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { ShoppingCart, BookOpen, Loader2, Star, ShieldCheck, Truck } from 'lucide-react';
+import { ShoppingCart, BookOpen, Loader2, Star, ShieldCheck, Truck, X } from 'lucide-react';
 import products from '../products.json';
 
 export default function HomePage() {
     const [loading, setLoading] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        address: '',
+        city: '',
+        zip: '',
+        country: 'Mexico'
+    });
 
-    const handleBuyClick = async (productId) => {
-        setLoading(productId);
+    const handleBuyClick = (product) => {
+        setSelectedProduct(product);
+        setShowModal(true);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmitOrder = async (e) => {
+        e.preventDefault();
+        setLoading(selectedProduct.id);
+        
         try {
             // Call simulated Lulu.com API
             const response = await fetch('/api/lulu-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId }),
+                body: JSON.stringify({ 
+                    productId: selectedProduct.id,
+                    shippingInfo: formData
+                }),
             });
 
             if (!response.ok) {
@@ -22,7 +47,8 @@ export default function HomePage() {
 
             const data = await response.json();
             
-            alert(`¡Simulación de Compra Exitosa!\n\nSe ha registrado la orden para el producto ID: ${productId}.\nOrden de Impresión (Lulu.com Mock): ${data.order_id}\nEstado: ${data.status}\n\n(En la versión final, serás redirigido a Stripe primero).`);
+            alert(`¡Compra Exitosa, ${formData.name}!\n\nHemos registrado tus datos y tu orden.\nOrden de Impresión (Lulu.com Mock): ${data.order_id}\nSe enviará a: ${formData.address}, ${formData.city}\n\n(Este formulario reemplazará temporalmente a Stripe Checkout).`);
+            setShowModal(false);
         } catch (error) {
             console.error("Failed to process order:", error);
             alert(`Error processing order: ${error.message}`);
@@ -36,6 +62,72 @@ export default function HomePage() {
             <Head>
                 <title>Códice | Ediciones Premium Bajo Demanda</title>
             </Head>
+
+            {/* Modal de Checkout (Simulado) */}
+            {showModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="font-bold text-lg text-slate-900">Datos de Envío</h3>
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmitOrder} className="p-6">
+                            <div className="mb-6 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex gap-4">
+                                <img src={selectedProduct?.image_url} alt={selectedProduct?.title} className="w-16 h-24 object-cover rounded shadow-sm" />
+                                <div>
+                                    <p className="font-semibold text-slate-900 line-clamp-1">{selectedProduct?.title}</p>
+                                    <p className="text-indigo-600 font-bold mt-1">${(selectedProduct?.price_cents / 100).toFixed(2)} USD</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+                                        <input required type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all" placeholder="Ej. Juan Pérez" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                                        <input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all" placeholder="juan@ejemplo.com" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Dirección (Calle y Número)</label>
+                                        <input required type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all" placeholder="Av. Principal 123" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
+                                        <input required type="text" name="city" value={formData.city} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all" placeholder="CDMX" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Código Postal</label>
+                                        <input required type="text" name="zip" value={formData.zip} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all" placeholder="01000" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-8">
+                                <button 
+                                    type="submit" 
+                                    disabled={loading === selectedProduct?.id}
+                                    className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-70"
+                                >
+                                    {loading === selectedProduct?.id ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <>Confirmar Orden</>
+                                    )}
+                                </button>
+                                <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1">
+                                    <ShieldCheck className="w-3 h-3" /> 
+                                    Sus datos están seguros. Simulación de pago activo.
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Navbar */}
             <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
@@ -99,8 +191,6 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
-
-            
 
             {/* Author Showcase Section */}
             <section className="py-20 bg-slate-900 text-white border-y border-slate-800">
@@ -183,18 +273,11 @@ export default function HomePage() {
                                             ${(product.price_cents / 100).toFixed(2)}
                                         </span>
                                         <button 
-                                            onClick={() => handleBuyClick(product.id)}
-                                            disabled={loading === product.id}
-                                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white bg-slate-900 hover:bg-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                            onClick={() => handleBuyClick(product)}
+                                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white bg-slate-900 hover:bg-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all"
                                         >
-                                            {loading === product.id ? (
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <ShoppingCart className="w-4 h-4" />
-                                                    <span>Comprar</span>
-                                                </>
-                                            )}
+                                            <ShoppingCart className="w-4 h-4" />
+                                            <span>Comprar</span>
                                         </button>
                                     </div>
                                 </div>
