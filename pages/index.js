@@ -8,11 +8,27 @@ export default function HomePage() {
 
     const handleBuyClick = async (productId) => {
         setLoading(productId);
-        // Simular un proceso de pago
-        setTimeout(() => {
-            alert(`¡Simulación de Compra Exitosa!\n\nSe ha registrado la orden para el producto ID: ${productId}.\n(En la versión final, serás redirigido a Stripe para pagar de verdad).`);
+        try {
+            // Call simulated Lulu.com API
+            const response = await fetch('/api/lulu-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            alert(`¡Simulación de Compra Exitosa!\n\nSe ha registrado la orden para el producto ID: ${productId}.\nOrden de Impresión (Lulu.com Mock): ${data.order_id}\nEstado: ${data.status}\n\n(En la versión final, serás redirigido a Stripe primero).`);
+        } catch (error) {
+            console.error("Failed to process order:", error);
+            alert(`Error processing order: ${error.message}`);
+        } finally {
             setLoading(null);
-        }, 1500);
+        }
     };
 
     return (
