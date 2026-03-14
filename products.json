@@ -1,0 +1,38 @@
+[
+  {
+    "id": "book-quijote-001",
+    "type": "book",
+    "title": "Don Quijote de la Mancha",
+    "author": "Miguel de Cervantes",
+    "price_cents": 2499,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/PSM_V80_D228_Don_Quixote.jpg/800px-PSM_V80_D228_Don_Quixote.jpg",
+    "description": "La obra cumbre de la literatura española. Una edición especial impresa bajo demanda con tapa dura y acabado premium."
+  },
+  {
+    "id": "comic-space-001",
+    "type": "comic",
+    "title": "Las Crónicas del Vacío",
+    "author": "El Arquitecto",
+    "price_cents": 1299,
+    "image_url": "https://via.placeholder.com/400x600.png?text=Comic+Cover",
+    "description": "Una épica aventura espacial en formato cómic a todo color. Sumérgete en el vacío del universo."
+  },
+  {
+    "id": "book-espada-luz",
+    "type": "book",
+    "title": "La Espada de la Luz",
+    "author": "Delfino Rene Garcia Vazquez",
+    "price_cents": 1999,
+    "image_url": "https://via.placeholder.com/400x600.png?text=La+Espada+De+La+Luz",
+    "description": "¿Qué sucederá cuando la humanidad sea despojada de toda conciencia? En un mundo donde la guerra estalla y lo destruye todo, la espada creada por Uriel, la espada de la luz, inicia una nueva cruzada para salvar al mundo del señor de la oscuridad. Una épica historia de ángeles, demonios y el destino de la humanidad."
+  },
+  {
+    "id": "book-espada-luz-resurreccion",
+    "type": "book",
+    "title": "La Espada De La Luz: Resurrección",
+    "author": "Delfino Rene Garcia Vazquez",
+    "price_cents": 2199,
+    "image_url": "https://via.placeholder.com/400x600.png?text=La+Espada+De+La+Luz:+Resurreccion",
+    "description": "La esperada continuación de la saga. Después de los eventos del primer libro, la batalla entre la luz y la oscuridad se intensifica. Resurrección nos lleva más profundo en la mitología de los ángeles, donde el destino final está más en juego que nunca."
+  }
+]
