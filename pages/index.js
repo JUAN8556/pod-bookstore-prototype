@@ -65,6 +65,7 @@ export default function HomePage() {
         <div className="min-h-screen font-sans selection:bg-indigo-100 selection:text-indigo-900">
             <Head>
                 <title>Códice | Ediciones Premium Bajo Demanda</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
             </Head>
 
             {/* Modal de Checkout (Simulado) */}
@@ -145,16 +146,16 @@ export default function HomePage() {
                                 Códice
                             </span>
                         </div>
-                        <div className="hidden sm:flex items-center space-x-8 text-sm font-medium text-slate-600">
+                        <div className="flex items-center space-x-4 sm:space-x-8 text-sm font-medium text-slate-600">
                             <a href="#catalogo" className="hover:text-indigo-600 transition-colors">Catálogo</a>
-                            <a href="#" className="hover:text-indigo-600 transition-colors">Autores</a>
+                            <a href="#" className="hidden sm:inline hover:text-indigo-600 transition-colors">Autores</a>
                             {session ? (
-                                <button onClick={() => router.push('/profile')} className="flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
-                                    <User className="w-4 h-4" /> Mi Cuenta
+                                <button onClick={() => router.push('/profile')} className="flex items-center gap-1 sm:gap-2 text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
+                                    <User className="w-4 h-4" /> <span className="hidden sm:inline">Mi Cuenta</span>
                                 </button>
                             ) : (
-                                <button onClick={() => router.push('/login')} className="flex items-center gap-2 text-slate-600 font-bold hover:text-indigo-600 transition-colors">
-                                    <User className="w-4 h-4" /> Iniciar Sesión
+                                <button onClick={() => router.push('/login')} className="flex items-center gap-1 sm:gap-2 text-slate-600 font-bold hover:text-indigo-600 transition-colors">
+                                    <User className="w-4 h-4" /> <span className="hidden sm:inline">Entrar</span>
                                 </button>
                             )}
                         </div>
