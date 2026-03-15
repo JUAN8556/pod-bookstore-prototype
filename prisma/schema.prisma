@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(BUYER)
+  vendor        Vendor?
+  orders        Order[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  BUYER
+  VENDOR
+  ADMIN
+}
+
+model Vendor {
+  id              String   @id
+  user            User     @relation(fields: [id], references: [id])
+  storeName       String
+  stripeAccountId String?
+  payoutsEnabled  Boolean  @default(false)
+  books           Book[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Book {
+  id             String      @id @default(uuid())
+  vendorId       String
+  vendor         Vendor      @relation(fields: [vendorId], references: [id])
+  title          String
+  description    String?
+  coverUrl       String?
+  pdfUrl         String?
+  retailPrice    Decimal     @db.Decimal(10, 2)
+  luluSpecs      Json?       // JSON config for printing specs
+  isActive       Boolean     @default(true)
+  orderItems     OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Order {
+  id               String      @id @default(uuid())
+  userId           String?
+  user             User?       @relation(fields: [userId], references: [id])
+  stripePiId       String?     @unique // Stripe Payment Intent ID
+  totalAmount      Decimal     @db.Decimal(10, 2)
+  shippingAddress  Json?       // Destination address
+  status           OrderStatus @default(PENDING)
+  orderItems       OrderItem[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PRINTING
+  SHIPPED
+  CANCELLED
+}
+
+model OrderItem {
+  id               String  @id @default(uuid())
+  orderId          String
+  order            Order   @relation(fields: [orderId], references: [id])
+  bookId           String
+  book             Book    @relation(fields: [bookId], references: [id])
+  quantity         Int     @default(1)
+  retailPrice      Decimal @db.Decimal(10, 2) // Saved price at checkout time
+  luluPrintCost    Decimal @db.Decimal(10, 2) // Kept by platform
+  luluShippingCost Decimal @db.Decimal(10, 2) // Kept by platform
+  sellerProfit     Decimal @db.Decimal(10, 2) // Sent to vendor via Stripe Connect
+}

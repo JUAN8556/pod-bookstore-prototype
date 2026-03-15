@@ -12,9 +12,49 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import products from "../products.json";
+import prisma from '../lib/prisma'; // Added prisma
 
-export default function HomePage() {
+export async function getServerSideProps() {
+  try {
+    // Fetch live books directly from Supabase via Prisma!
+    const books = await prisma.book.findMany({
+      where: { isActive: true },
+      include: {
+        vendor: {
+          include: {
+            user: true
+          }
+        }
+      }
+    });
+
+    const formattedBooks = books.map(book => ({
+      id: book.id,
+      type: "Libro",
+      title: book.title,
+      author: book.vendor?.storeName || book.vendor?.user?.name || "Autor Independiente",
+      description: book.description || "Sin descripción disponible.",
+      price_cents: Number(book.retailPrice) * 100, // Prisma returns Decimal, we need cents for Stripe
+      image_url: book.coverUrl || "https://via.placeholder.com/400x600.png?text=Portada+No+Disponible",
+      connected_account_id: book.vendor?.stripeAccountId || null
+    }));
+
+    return {
+      props: {
+        products: formattedBooks
+      }
+    };
+  } catch (error) {
+    console.error("Database fetch error:", error);
+    return {
+      props: {
+        products: []
+      }
+    };
+  }
+}
+
+export default function HomePage({ products }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(null);
