@@ -16,6 +16,7 @@ export default function VendorDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("libros");
+  const [connectingStripe, setConnectingStripe] = useState(false);
 
   // Mocks temporales antes de conectar Prisma real
   const mockBooks = [
@@ -28,6 +29,19 @@ export default function VendorDashboard() {
     },
     { id: 2, title: "Resurrección", sales: 89, price: 19.99, status: "Activo" },
   ];
+
+  const handleConnectStripe = async () => {
+    setConnectingStripe(true);
+    try {
+      const res = await fetch('/api/stripe/connect', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      window.location.href = data.url;
+    } catch (e) {
+      alert(`Error de Stripe: ${e.message}`);
+      setConnectingStripe(false);
+    }
+  };
 
   if (status === "loading")
     return (
@@ -202,8 +216,12 @@ export default function VendorDashboard() {
                 </p>
               </div>
 
-              <button className="inline-flex items-center gap-2 bg-[#635BFF] hover:bg-[#4B45C6] text-white px-6 py-3 rounded-lg font-bold transition-colors shadow-sm">
-                <LinkIcon className="w-5 h-5" /> Conectar con Stripe
+              <button 
+                onClick={handleConnectStripe}
+                disabled={connectingStripe}
+                className="inline-flex items-center gap-2 bg-[#635BFF] hover:bg-[#4B45C6] text-white px-6 py-3 rounded-lg font-bold transition-colors shadow-sm disabled:opacity-70"
+              >
+                <LinkIcon className="w-5 h-5" /> {connectingStripe ? 'Conectando...' : 'Conectar con Stripe'}
               </button>
             </div>
           </div>
