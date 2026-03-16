@@ -10,7 +10,10 @@ import {
   Link as LinkIcon,
   AlertCircle,
   Plus,
+  Image as ImageIcon,
+  FileText,
 } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 export default function VendorDashboard() {
   const { data: session, status } = useSession();
@@ -27,6 +30,14 @@ export default function VendorDashboard() {
     description: "",
     price: "",
   });
+  const [files, setFiles] = useState({
+    cover: null,
+    manuscript: null,
+  });
+
+  const handleFileChange = (e, type) => {
+    setFiles({ ...files, [type]: e.target.files[0] });
+  };
 
   // [PLACEHOLDER]: Get `accountId` from query or local DB mapping.
   // Using router query for demo purposes:
@@ -77,10 +88,31 @@ export default function VendorDashboard() {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     if (!accountId) return alert("Please onboard with Stripe first.");
+    if (!files.cover || !files.manuscript)
+      return alert("Por favor suba la portada y el manuscrito.");
 
     setCreatingProduct(true);
     try {
-      // Creates product at the platform level (not connected account)
+      // 1. Upload Cover to Supabase Storage
+      const coverExt = files.cover.name.split(".").pop();
+      const coverPath = `${Date.now()}_cover.${coverExt}`;
+      const { error: coverError } = await supabase.storage
+        .from("covers")
+        .upload(coverPath, files.cover);
+      if (coverError) throw coverError;
+      const {
+        data: { publicUrl: coverUrl },
+      } = supabase.storage.from("covers").getPublicUrl(coverPath);
+
+      // 2. Upload Manuscript to private Supabase Storage
+      const msExt = files.manuscript.name.split(".").pop();
+      const msPath = `${Date.now()}_manuscript.${msExt}`;
+      const { error: msError } = await supabase.storage
+        .from("manuscripts")
+        .upload(msPath, files.manuscript);
+      if (msError) throw msError;
+
+      // 3. Create Product in Platform (API)
       const res = await fetch("/api/products/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,14 +121,20 @@ export default function VendorDashboard() {
           description: productForm.description,
           priceInCents: Math.round(parseFloat(productForm.price) * 100),
           connectedAccountId: accountId,
+          coverUrl: coverUrl,
+          pdfUrl: msPath,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert(`Producto creado en la plataforma! Product ID: ${data.id}`);
+
+      alert(
+        `¡Producto subido a la base de datos! Ya está disponible en la tienda.`,
+      );
       setProductForm({ name: "", description: "", price: "" });
+      setFiles({ cover: null, manuscript: null });
     } catch (error) {
-      alert(`Error creating product: ${error.message}`);
+      alert(`Error creando producto: ${error.message}`);
     } finally {
       setCreatingProduct(false);
     }
@@ -243,6 +281,35 @@ export default function VendorDashboard() {
                   placeholder="25.00"
                   className="mt-1 w-full border border-slate-300 rounded-lg p-2"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-4 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <ImageIcon className="w-8 h-8 text-indigo-400 mb-2" />
+                  <span className="text-sm font-medium text-slate-700">
+                    Portada (JPG/PNG)
+                  </span>
+                  <input
+                    required
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "cover")}
+                    className="text-xs text-slate-500 mt-2 w-full"
+                  />
+                </div>
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-4 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <FileText className="w-8 h-8 text-rose-400 mb-2" />
+                  <span className="text-sm font-medium text-slate-700">
+                    Manuscrito (PDF)
+                  </span>
+                  <input
+                    required
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => handleFileChange(e, "manuscript")}
+                    className="text-xs text-slate-500 mt-2 w-full"
+                  />
+                </div>
               </div>
 
               <button

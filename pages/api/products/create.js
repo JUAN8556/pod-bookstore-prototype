@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import prisma from "../../../lib/prisma";
 
 // [PLACEHOLDER]: Set your secret key in your environment variables.
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -20,6 +21,8 @@ export default async function handler(req, res) {
     priceInCents,
     currency = "usd",
     connectedAccountId,
+    coverUrl,
+    pdfUrl,
   } = req.body;
 
   if (!name || !priceInCents || !connectedAccountId) {
@@ -29,9 +32,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Create Products at the Platform Level
-    // The prompt specifies NOT to create it on the connected account.
-    // Instead, store the mapping in the product's metadata or your database.
     const product = await stripeClient.products.create({
       name: name,
       description: description || "No description provided.",
@@ -40,17 +40,54 @@ export default async function handler(req, res) {
         currency: currency,
       },
       metadata: {
-        vendor_account_id: connectedAccountId, // Mapping product -> connected account
+        vendor_account_id: connectedAccountId,
+      },
+      images: coverUrl ? [coverUrl] : [],
+    });
+
+    // Mocking standard Next-Auth flow for demo purposes
+    const mockUserId = "11111111-1111-1111-1111-111111111111";
+
+    // Upsert User
+    await prisma.user.upsert({
+      where: { id: mockUserId },
+      update: {},
+      create: {
+        id: mockUserId,
+        email: "vendor@example.com",
+        name: "Vendor Demo",
+        role: "VENDOR",
       },
     });
 
-    // [PLACEHOLDER]: Store the new Product ID and Price ID in your Prisma database here.
-    // e.g., await prisma.book.create({ data: { stripeProductId: product.id, vendorId: ... } });
+    // Upsert Vendor
+    await prisma.vendor.upsert({
+      where: { id: mockUserId },
+      update: { stripeAccountId: connectedAccountId },
+      create: {
+        id: mockUserId,
+        storeName: "Códice Autor",
+        stripeAccountId: connectedAccountId,
+      },
+    });
+
+    // 3. Save Book to Prisma DB
+    const dbBook = await prisma.book.create({
+      data: {
+        vendorId: mockUserId,
+        title: name,
+        description: description,
+        retailPrice: priceInCents / 100, // Decimal format $25.00
+        coverUrl: coverUrl,
+        pdfUrl: pdfUrl,
+        isActive: true,
+      },
+    });
 
     return res.status(200).json({
-      id: product.id,
+      id: dbBook.id,
+      stripe_product_id: product.id,
       name: product.name,
-      default_price: product.default_price,
       metadata: product.metadata,
     });
   } catch (error) {
